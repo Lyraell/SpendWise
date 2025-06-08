@@ -1,0 +1,70 @@
+<!-- Views/AddExpenseWindow.axaml -->
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:SpendWise.ViewModels"
+        mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="300"
+        x:Class="SpendWise.Views.AddExpenseWindow"
+        Title="Add New Expense"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        SizeToContent="WidthAndHeight"
+        Background="#263238"
+
+		TransparencyLevelHint="None" 
+		Topmost="True"
+		x:DataType="vm:AddExpenseWindowViewModel">
+
+	<Design.DataContext>
+		<vm:AddExpenseWindowViewModel/>
+	</Design.DataContext>
+
+	<!-- Content Panel - no need for a separate background here, as it inherits from Window -->
+	<Panel>
+		<StackPanel Spacing="15" Margin="20">
+			<TextBlock Text="Add New Expense" FontSize="24" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
+
+			<!-- Description Dropdown -->
+			<StackPanel>
+				<TextBlock Text="Description" Foreground="White" Margin="0,0,0,5"/>
+				<ComboBox ItemsSource="{Binding ExpenseCategories}"
+                          SelectedItem="{Binding SelectedCategory}"
+                          PlaceholderText="Select category"
+                          Background="#37474F" Foreground="White" CornerRadius="5">
+					<ComboBox.Styles>
+						<Style Selector="ComboBoxItem">
+							<Setter Property="Background" Value="#37474F"/>
+							<Setter Property="Foreground" Value="White"/>
+						</Style>
+					</ComboBox.Styles>
+				</ComboBox>
+			</StackPanel>
+
+			<!-- Amount Input -->
+			<StackPanel>
+				<TextBlock Text="Amount" Foreground="White" Margin="0,0,0,5"/>
+				<TextBox Text="{Binding Amount, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                         Watermark="Enter amount (e.g., 12.34)"
+                         Background="#37474F" Foreground="White" CornerRadius="5" Padding="8"/>
+			</StackPanel>
+
+			<!-- Date Picker -->
+			<StackPanel>
+				<TextBlock Text="Date" Foreground="White" Margin="0,0,0,5"/>
+				<DatePicker SelectedDate="{Binding SelectedDate}"
+                            Background="#37474F" Foreground="White" CornerRadius="5"/>
+			</StackPanel>
+
+			<!-- Buttons -->
+			<StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,20,0,0">
+				<Button Content="Cancel" Command="{Binding CancelCommand}"
+                        Background="#B0BEC5" Foreground="#263238"
+                        CornerRadius="5" Padding="15,8"/>
+				<Button Content="Add Expense" Command="{Binding AddExpenseCommand}"
+                        Background="#8BC34A" Foreground="White"
+                        CornerRadius="5" Padding="15,8"/>
+			</StackPanel>
+		</StackPanel>
+	</Panel>
+</Window>

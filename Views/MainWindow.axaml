@@ -1,0 +1,123 @@
+<!-- Views/MainWindow.axaml -->
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:SpendWise.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="SpendWise.Views.MainWindow"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="SpendWise"
+        TransparencyLevelHint="None"
+        Background="#1E1E1E"
+        CanResize="True"
+        MinHeight="450" MinWidth="350"
+        x:DataType="vm:MainWindowViewModel">
+
+	<Design.DataContext>
+		<vm:MainWindowViewModel/>
+	</Design.DataContext>
+
+	<Panel>
+		<!-- Main Grid for the Window Layout -->
+		<Grid RowDefinitions="70, 150, *, 80" Margin="20">
+			<!-- Fixed pixel values -->
+			<!-- Header Section -->
+			<Grid Grid.Row="0" ColumnDefinitions="*, 150" Margin="0,10,0,20">
+				<!-- Fixed pixel value -->
+				<TextBlock Grid.Column="0" Text="SpendWise"
+                           FontSize="32" FontWeight="Bold" Foreground="White"
+                           VerticalAlignment="Center"/>
+				<Button Grid.Column="1" Content=" Add Expense" Command="{Binding AddNewExpenseCommand}"
+                        CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}"
+                        Background="#8E24AA" Foreground="White"
+                        CornerRadius="20" Padding="15,10"
+                        HorizontalAlignment="Right" VerticalAlignment="Center">
+					<Button.Template>
+						<ControlTemplate>
+							<Border Background="{TemplateBinding Background}" CornerRadius="{TemplateBinding CornerRadius}"
+                                    Padding="{TemplateBinding Padding}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}">
+								<StackPanel Orientation="Horizontal">
+									<PathIcon Data="M12 4C7.58172 4 4 7.58172 4 12C4 16.4183 7.58172 20 12 20C16.4183 20 20 16.4183 20 12C20 7.58172 16.4183 4 12 4ZM13 11H16V13H13V16H11V13H8V11H11V8H13V11Z"
+                                              Width="16" Height="16" Margin="0,0,5,0"
+                                              VerticalAlignment="Center" Foreground="White"/>
+									<ContentPresenter Content="{TemplateBinding Content}"
+                                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                      HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"/>
+								</StackPanel>
+							</Border>
+						</ControlTemplate>
+					</Button.Template>
+				</Button>
+			</Grid>
+
+			<!-- June Expenses Card -->
+			<Border Grid.Row="1" Background="#8E24AA" CornerRadius="15" Padding="20" Margin="0,0,0,20">
+				<Grid>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="*"/>
+						<ColumnDefinition Width="70"/>
+						<!-- Fixed pixel value -->
+					</Grid.ColumnDefinitions>
+
+					<StackPanel Grid.Column="0">
+						<TextBlock Text="June Expenses" FontSize="18" FontWeight="SemiBold" Foreground="White"/>
+						<StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+							<TextBlock Text="$" FontSize="36" FontWeight="Bold" Foreground="White" VerticalAlignment="Top"/>
+							<TextBlock Text="{Binding CurrentMonthTotalFormatted}"
+                                       FontSize="36" FontWeight="Bold" Foreground="White" VerticalAlignment="Top"/>
+						</StackPanel>
+						<TextBlock Text="Total spending for the current month." FontSize="14" Foreground="LightGray"/>
+					</StackPanel>
+					<PathIcon Grid.Column="1" Data="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM13 17H11V15H13V17ZM13 13H11V7H13V13Z"
+                              Width="24" Height="24" Foreground="White" VerticalAlignment="Top"/>
+				</Grid>
+			</Border>
+
+			<!-- All Expenses Section Header -->
+			<TextBlock Grid.Row="2" Text="All Expenses"
+                       FontSize="22" FontWeight="SemiBold" Foreground="White" Margin="0,0,0,10"/>
+
+			<!-- All Expenses List/Placeholder -->
+			<Border Grid.Row="3" Background="#263238" CornerRadius="15" Padding="20"
+                    BorderBrush="#616161" BorderThickness="1"
+                    MinHeight="250" VerticalAlignment="Stretch"
+                    UseLayoutRounding="True">
+				<Grid>
+					<Grid.RowDefinitions>
+						<RowDefinition Height="*"/>
+						<RowDefinition Height="50"/>
+						<!-- Fixed pixel value -->
+					</Grid.RowDefinitions>
+
+					<StackPanel Grid.Row="0" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                IsVisible="{Binding NoExpensesAdded}">
+						<Border Background="#424242" Width="100" Height="100" CornerRadius="10"
+                                HorizontalAlignment="Center" VerticalAlignment="Center"
+                                Margin="0,0,0,20">
+							<PathIcon Data="M12 4C7.58172 4 4 7.58172 4 12C4 16.4183 7.58172 20 12 20C16.4183 20 20 16.4183 20 12C20 7.58172 16.4183 4 12 4ZM13 11H16V13H13V16H11V13H8V11H11V8H13V11Z"
+                                      Width="48" Height="48" Foreground="LightGray"
+                                      HorizontalAlignment="Center" VerticalAlignment="Center"/>
+						</Border>
+						<TextBlock Text="No expenses yet."
+                                   FontSize="18" FontWeight="SemiBold" Foreground="LightGray"
+                                   HorizontalAlignment="Center"/>
+						<TextBlock Text="Add your first expense to see it here."
+                                   FontSize="14" Foreground="DimGray"
+                                   HorizontalAlignment="Center" Margin="0,5,0,20"/>
+						<Button Content="Add Your First Expense" Command="{Binding AddNewExpenseCommand}"
+                                CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}"
+                                Background="#9C27B0" Foreground="White"
+                                CornerRadius="10" Padding="15,10"/>
+					</StackPanel>
+
+					<TextBlock Grid.Row="0" Text="List of expenses will go here."
+                               Foreground="White" IsVisible="{Binding HasExpenses}"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+				</Grid>
+			</Border>
+		</Grid>
+	</Panel>
+</Window>
