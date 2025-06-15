@@ -6,7 +6,7 @@
         xmlns:vm="using:SpendWise.ViewModels"
         mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="300"
         x:Class="SpendWise.Views.AddExpenseWindow"
-        Title="Add New Expense"
+        Title="AddNewExpense"
         WindowStartupLocation="CenterOwner"
         CanResize="False"
         SizeToContent="WidthAndHeight"
@@ -46,7 +46,7 @@
 				<TextBlock Text="Amount" Foreground="White" Margin="0,0,0,5"/>
 				<TextBox Text="{Binding Amount, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                          Watermark="Enter amount (e.g., 12.34)"
-                         Background="#37474F" Foreground="White" CornerRadius="5" Padding="8"/>
+                         Background="#37474F" Foreground="Blue" CornerRadius="5" Padding="8"/>
 			</StackPanel>
 
 			<!-- Date Picker -->

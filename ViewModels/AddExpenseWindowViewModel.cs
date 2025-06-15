@@ -6,17 +6,18 @@ using System.Globalization;
 using System.Linq;
 using ReactiveUI;
 using System.Reactive;
-using SpendWise.Models; // Updated namespace
+using SpendWise.Models;
 
-namespace SpendWise.ViewModels // Updated namespace
+namespace SpendWise.ViewModels
 {
     public class AddExpenseWindowViewModel : ViewModelBase
     {
-        private string _selectedCategory;
-        private string _amount;
+        
+        private string? _selectedCategory;
+        private string _amount = string.Empty;
         private DateTimeOffset _selectedDate;
 
-        public event EventHandler<Expense> CloseWindow;
+        public event EventHandler<Expense?>? CloseWindow; // Expense can be null if cancelled
 
         public AddExpenseWindowViewModel()
         {
@@ -25,15 +26,14 @@ namespace SpendWise.ViewModels // Updated namespace
                 "Food", "Leisure", "Utilities", "Transport", "Shopping", "Rent", "Health", "Education", "Other"
             };
 
-            SelectedDate = DateTimeOffset.Now;
+            SelectedDate = DateTimeOffset.Now; // Default to today's date
 
-            AddExpenseCommand = ReactiveCommand.Create(AddExpense);
-            CancelCommand = ReactiveCommand.Create(Cancel);
+            
         }
 
         public ObservableCollection<string> ExpenseCategories { get; }
 
-        public string SelectedCategory
+        public string? SelectedCategory // Declared as nullable property
         {
             get => _selectedCategory;
             set => this.RaiseAndSetIfChanged(ref _selectedCategory, value);
@@ -51,28 +51,26 @@ namespace SpendWise.ViewModels // Updated namespace
             set => this.RaiseAndSetIfChanged(ref _selectedDate, value);
         }
 
-        public ReactiveCommand<Unit, Unit> AddExpenseCommand { get; }
-        public ReactiveCommand<Unit, Unit> CancelCommand { get; }
 
-        private void AddExpense()
+        public void AddExpenseCommand()
         {
             if (string.IsNullOrWhiteSpace(SelectedCategory))
             {
                 Console.WriteLine("Please select a category.");
-                CloseWindow?.Invoke(this, null);
+                CloseWindow?.Invoke(this, null); // Pass null explicitly for nullable Expense?
                 return;
             }
 
             if (!double.TryParse(Amount, NumberStyles.Any, CultureInfo.InvariantCulture, out double amountValue) || amountValue <= 0)
             {
                 Console.WriteLine("Please enter a valid positive amount.");
-                CloseWindow?.Invoke(this, null);
+                CloseWindow?.Invoke(this, null); // Pass null explicitly for nullable Expense?
                 return;
             }
 
             var newExpense = new Expense
             {
-                Description = SelectedCategory,
+                Description = SelectedCategory, // SelectedCategory is non-null here due to check above
                 Amount = amountValue,
                 Date = SelectedDate.Date
             };
@@ -80,9 +78,9 @@ namespace SpendWise.ViewModels // Updated namespace
             CloseWindow?.Invoke(this, newExpense);
         }
 
-        private void Cancel()
+        public void CancelCommand()
         {
-            CloseWindow?.Invoke(this, null);
+            CloseWindow?.Invoke(this, null); // Pass null explicitly for nullable Expense?
         }
     }
 }
