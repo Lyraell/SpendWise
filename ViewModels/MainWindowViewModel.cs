@@ -1,53 +1,64 @@
 ﻿// ViewModels/MainWindowViewModel.cs
 using System;
 using System.Collections.ObjectModel;
-using System.Reactive;
-using Avalonia.Controls;
-using ReactiveUI;
-using SpendWise.Views;
-using System.Linq; // For Sum()
-using SpendWise.Models; // For Expense model
-using Avalonia.Threading; // Crucial for Dispatcher.UIThread
-using System.Reactive.Linq; // Needed for ObserveOn extension method (though we'll use a ctor parameter)
+using System.Linq;
+using System.Threading.Tasks;
+using System.Globalization;
 using Avalonia;
-using Avalonia.Controls.ApplicationLifetimes; // For IClassicDesktopStyleApplicationLifetime
+using Avalonia.Controls.ApplicationLifetimes;
+using ReactiveUI;
+using SpendWise.Models;
+using SpendWise.Services;
+using SpendWise.Views;
+
 namespace SpendWise.ViewModels
 {
     public class MainWindowViewModel : ViewModelBase
     {
-        // Added '?' to allow null for Description, or initialized in ctor
-        private ObservableCollection<Expense> _expenses;
-        private double _currentMonthTotal;
-        private string _currentMonthTotalFormatted;
-        private bool _noExpensesAdded;
-        private bool _hasExpenses;
+        private readonly ExpenseService _expenseService;
+        private ObservableCollection<Expense> _allExpenses;
+        private ObservableCollection<Expense> _displayedExpenses;
+        private DateTime _displayedMonth;
+        private string _displayedMonthText = string.Empty;
+        private string _currentMonthTotalFormatted = "0.00";
+        private bool _isAnyExpenseAdded;
+        private bool _hasExpensesForCurrentMonth;
 
         public MainWindowViewModel()
         {
-            // Initialize collections and properties to non-null values
-            _expenses = new ObservableCollection<Expense>(); // Initialized here
-            _currentMonthTotalFormatted = "0.00"; // Initialized here
-            UpdateExpenseSummary(); // Initial calculation and UI update
+            _expenseService = new ExpenseService();
+            _expenseService.EnsureDatabaseCreated();
+            _allExpenses = new ObservableCollection<Expense>();
+            _displayedExpenses = new ObservableCollection<Expense>();
+            DisplayedMonth = DateTime.Now;
 
-            // Define the command to add a new expense
-            // IMPORTANT FIX: Pass RxApp.MainThreadScheduler directly to CreateFromTask
-            // This handles the CanExecute/IsEnabled updates on the UI thread without breaking the ReactiveCommand type.
-           
 
-            // Subscribe to the CollectionChanged event of Expenses.
-            Expenses.CollectionChanged += (sender, e) => UpdateExpenseSummary();
+            _ = LoadAllExpensesAsync();
         }
 
-        public ObservableCollection<Expense> Expenses
+        // Collections
+        public ObservableCollection<Expense> DisplayedExpenses
         {
-            get => _expenses;
-            set => this.RaiseAndSetIfChanged(ref _expenses, value);
+            get => _displayedExpenses;
+            set => this.RaiseAndSetIfChanged(ref _displayedExpenses, value);
         }
 
-        public double CurrentMonthTotal
+        // Properties for UI Binding
+        public DateTime DisplayedMonth
         {
-            get => _currentMonthTotal;
-            set => this.RaiseAndSetIfChanged(ref _currentMonthTotal, value);
+            get => _displayedMonth;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _displayedMonth, value);
+                // Display the month and year, e.g., "June 2025"
+                DisplayedMonthText = value.ToString("MMMM yyyy", CultureInfo.InvariantCulture);
+            }
+        }
+
+        public string DisplayedMonthText
+        {
+            get => _displayedMonthText;
+            set => this.RaiseAndSetIfChanged(ref _displayedMonthText, value);
         }
 
         public string CurrentMonthTotalFormatted
@@ -56,48 +67,70 @@ namespace SpendWise.ViewModels
             set => this.RaiseAndSetIfChanged(ref _currentMonthTotalFormatted, value);
         }
 
-        public bool NoExpensesAdded
+        public bool IsAnyExpenseAdded
         {
-            get => _noExpensesAdded;
-            set => this.RaiseAndSetIfChanged(ref _noExpensesAdded, value);
+            get => _isAnyExpenseAdded;
+            set => this.RaiseAndSetIfChanged(ref _isAnyExpenseAdded, value);
         }
 
-        public bool HasExpenses
+        public bool HasExpensesForCurrentMonth
         {
-            get => _hasExpenses;
-            set => this.RaiseAndSetIfChanged(ref _hasExpenses, value);
+            get => _hasExpensesForCurrentMonth;
+            set => this.RaiseAndSetIfChanged(ref _hasExpensesForCurrentMonth, value);
         }
+
+        
+        // Core Methods
+        private async Task LoadAllExpensesAsync()
+        {
+            var loadedExpenses = await _expenseService.LoadExpensesAsync();
+            _allExpenses = new ObservableCollection<Expense>(loadedExpenses);
+            UpdateViewForCurrentMonth();
+        }
+
         public async void AddNewExpenseCommand()
         {
             var addExpenseWindow = new AddExpenseWindow();
             var mainWindow = Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop ? desktop.MainWindow : null;
-            if (mainWindow == null)
+
+            if (mainWindow != null)
             {
-                Console.WriteLine("Main window is null");
-                return;
-            }
-            var result = await addExpenseWindow.ShowDialog<Expense>(mainWindow);
-            if (result != null)
-            {
-                // Add the new expense to the collection
-                Expenses.Add(result);
-                UpdateExpenseSummary(); // Update the summary after adding a new expense
-            }
-            else
-            {
-                Console.WriteLine("No expense was added.");
+                var result = await addExpenseWindow.ShowDialog<Expense>(mainWindow);
+                if (result != null)
+                {
+                    await _expenseService.AddExpenseAsync(result);
+                    _allExpenses.Add(result);
+                    UpdateViewForCurrentMonth();
+                }
             }
         }
 
-        private void UpdateExpenseSummary()
+        private void UpdateViewForCurrentMonth()
         {
-            var now = DateTime.Now;
-            CurrentMonthTotal = Expenses.Where(e => e.Date.Year == now.Year && e.Date.Month == now.Month)
-                                        .Sum(e => e.Amount);
-            CurrentMonthTotalFormatted = CurrentMonthTotal.ToString("F2");
+            var expensesForMonth = _allExpenses
+                .Where(e => e.Date.Year == DisplayedMonth.Year && e.Date.Month == DisplayedMonth.Month)
+                .OrderByDescending(e => e.Date)
+                .ToList();
 
-            NoExpensesAdded = Expenses.Count == 0;
-            HasExpenses = Expenses.Count > 0;
+            DisplayedExpenses = new ObservableCollection<Expense>(expensesForMonth);
+
+            var total = expensesForMonth.Sum(e => e.Amount);
+            CurrentMonthTotalFormatted = total.ToString("F2", CultureInfo.InvariantCulture);
+
+            IsAnyExpenseAdded = _allExpenses.Any();
+            HasExpensesForCurrentMonth = DisplayedExpenses.Any();
+        }
+
+        public async void NextMonthCommand()
+        {
+            DisplayedMonth = DisplayedMonth.AddMonths(1);
+            UpdateViewForCurrentMonth();
+        }
+
+        public async void PreviousMonthCommand()
+        {
+            DisplayedMonth = DisplayedMonth.AddMonths(-1);
+            UpdateViewForCurrentMonth();
         }
     }
 }

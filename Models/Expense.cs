@@ -5,7 +5,7 @@ namespace SpendWise.Models
 {
     public class Expense
     {
-        // Initialized string properties to empty string to avoid CS8618 warning
+        public int ID { get; set; }
         public string Description { get; set; } = string.Empty;
         public double Amount { get; set; }
         public DateTime Date { get; set; }
